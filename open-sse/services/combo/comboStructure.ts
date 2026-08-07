@@ -105,6 +105,14 @@ function normalizeRuntimeStep(
   const executionKey = buildExecutionKey(path, step.id);
   const label = typeof step.label === "string" ? step.label : null;
   const weight = step.weight || 0;
+  const stepRecord = step as unknown as Record<string, unknown>;
+  const offlineCondition: unknown = stepRecord.offlineCondition;
+  const offlineCooldownMs =
+    typeof stepRecord.offlineCooldownMs === "number" ? stepRecord.offlineCooldownMs : undefined;
+  const offlineRule: { offlineCondition?: unknown; offlineCooldownMs?: number } = {
+    ...(offlineCondition !== undefined ? { offlineCondition } : {}),
+    ...(offlineCooldownMs !== undefined ? { offlineCooldownMs } : {}),
+  };
 
   if (step.kind === "combo-ref") {
     return {
@@ -114,6 +122,7 @@ function normalizeRuntimeStep(
       comboName: step.comboName,
       weight,
       label,
+      ...offlineRule,
     };
   }
 
@@ -140,6 +149,7 @@ function normalizeRuntimeStep(
     // `prompt` is a per-step pipeline input and only exists on a model step —
     // #8894 widened the union with ComboProviderWildcardStep, which has no prompt.
     prompt: (step.kind === "model" ? step.prompt : null) || null,
+    ...offlineRule,
   } satisfies ResolvedComboTarget;
 }
 
